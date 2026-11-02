@@ -2,20 +2,13 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+Rhythm
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+It suggests the top 5 songs from a small catalog based on a listener's favorite genre and mood, plus targets for energy and other features. It assumes the listener can state their taste up front and that it stays the same from one session to the next. It's for classroom exploration only, not real users.
 
 ---
 
@@ -44,76 +37,55 @@ A feature only counts if the listener gave a preference for it, so a listener wh
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
-
-Prompts:  
-
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+The catalog has 19 songs across 16 genres and 14 moods. I added 9 songs to the original 10 (hip hop, classical, country, metal, r&b, reggae, edm, folk, latin) and removed none. It's still tiny, and it's missing things like lyrics, language, era, artist popularity, and anything about how people actually listen.
 
 ---
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+It works well when a listener's preferences agree with each other, like the pop, happy, energy 0.8 profile, which put Sunrise City and Rooftop Lights on top. Scoring by closeness also separates calm from intense songs correctly, and lofi/chill returned lofi chill tracks first, which matched my intuition. The reasons list makes every result easy to explain.
 
 ---
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
-
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+The biggest weakness I found is that the score is dominated by energy so the system can trap a listener in one same band/vibe regardless of what else they asked for. Energy can earn up to 2.0 points and valence up to 1.0, while a mood match is worth at most 1.5, so the numbers can outvote the label. When I tested a profile with mood "sad" but high energy (0.95) and high valence (0.9), four upbeat pop, latin and edm songs ranked ahead of every sad song, and the only sad song, Autumn Letters, barely made the list at fifth. A listener who wants a sad song and happens to set a high energy target is never shown the kind of music they named, which is a small filter bubble, since the results keep reflecting the numeric target and ignore the mood the listener actually asked for. SInce moods and genres appear on only one to three songs each in this catalog, listeners with unusual tastes get scored on energy alone, so they are also served the narrowest set of results.
 
 ---
 
 ## 7. Evaluation  
 
-How you checked whether the recommender behaved as expected. 
+I ran the recommender on a normal profile plus eight weird ones and read the top 5 and the reasons for each. Full output is in the README.
 
-Prompts:  
+**Profiles tested:** baseline (pop, happy, energy 0.8), conflicting (sad mood but high energy and valence), empty, genre/mood not in the catalog, energy 1.5, energy -0.5, case mismatch ("Pop"/"HAPPY"), mid-everything (0.5 on every number), and label-only (lofi, chill).
 
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
+**What was off**
 
-No need for numeric metrics unless you created some.
+- The baseline looked right. Sunrise City won because it matched everything.
+- The empty profile gave every song 0.00, so the "top 5" was just the first five rows in the file.
+- Capitalization broke the case-mismatch profile. The genre and mood bonuses just quietly vanished.
+- Out-of-range energy (1.5 or -0.5) was accepted with no complaint, and scores shrank for no good reason.
+- The conflicting profile put four upbeat songs ahead of the only sad one.
+- Mid-everything got the highest score of all (3.61) from a listener with no real taste.
+- Label-only had a tie at 2.50 that file order decided, and its #5 matched nothing.
+- Genres and moods that aren't in the catalog just fell back to energy.
+
+**Comparing three profiles** (baseline, case mismatch, conflicting)
+
+- *Baseline vs. case mismatch:* Same listener, only the capital letters differ, but the top score dropped from 4.46 to 1.96 and Gym Hero fell out of the top 5. Sunrise City still came first, but only because of its energy, and it tied with a hip hop song that matches neither genre nor mood. So the labels do a lot of the work, and a typo wipes it out.
+- *Baseline vs. conflicting:* Labels drive the baseline and the numbers drive the conflicting one. Sunrise City won the baseline on everything but only came fourth in the conflicting list. The one sad song only made it to #5 thanks to its mood bonus.
+- *Case mismatch vs. conflicting:* Both end up as upbeat songs ranked by energy, but the causes differ. One is a bug (text comparison) and the other is a design choice (numbers outweigh mood).
+
+**What surprised me:** tiny things like a capital letter or a missing preference changed the results a lot, and the scores gave no hint anything was wrong. The reasons list is what made the problems easy to spot.
 
 ---
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
-
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+I would clean up inputs (lowercase labels, clamp numbers to 0-1, handle empty profiles) and give partial credit to related moods and genres like chill and relaxed. Id also add tempo and artist as features and a diveristy step so the top 5 aren't all near-identical. To handle more complex tastes, a listener could have several profiles, like workout and study.
 
 ---
 
 ## 9. Personal Reflection  
 
-A few sentences about your experience.  
-
-Prompts:  
-
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+I learned that a recommender is really just a pile of choices about which features count and how much, and those choices decide who gets good results. The most surprising part was how much tiny details like a capital letter or an unset preference changed the output. It makes me think app recommendations reflect their weights and data, not some neutral read on my taste.
