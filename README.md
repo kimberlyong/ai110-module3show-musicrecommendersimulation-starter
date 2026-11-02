@@ -29,6 +29,20 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+Each song is scored by how closely it matches the user's taste profile, and the highest-scoring songs are recommended.
+
+**Song features:** genre, mood, energy, valence, danceability, acousticness, tempo.
+
+**UserProfile:** stores a preferred genre, a preferred mood, and target values for the numeric features (for example, target energy 0.8).
+
+**Scoring:** the score is a weighted sum of per-feature similarity.
+- *Numeric features* (energy, valence, etc.) score by closeness to the user's target, not by raw value. A song with energy 0.35 scores well for a user who wants 0.3, even though 0.9 is "higher."
+- *Mood and genre* add a bonus when they match the profile.
+- *Weights:* energy and mood count most because energy is specific and quantitative and mood reflects the listening situation. The other features contribute smaller amounts.
+
+**Choosing recommendations:** every song in the catalog is scored, the songs are sorted from highest to lowest, and the top 5 are returned along with a breakdown of why each one scored as it did.
+
+This system might limit if a user wants to listen to songs of a different genre or are interested in multiple different types of music. This could result in conflicting data that instead produces recommendations that are too varied. 
 ---
 
 ## Getting Started
@@ -71,12 +85,36 @@ You can add more tests in `tests/test_recommender.py`.
 Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
 
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+============================================================
+                   TOP 5 RECOMMENDATIONS                    
+         Profile: genre=pop, mood=happy, energy=0.8         
+============================================================
+
+#1  Sunrise City                             Score:  4.46
+------------------------------------------------------------
+  - mood matches 'happy' (+1.50)
+  - genre matches 'pop' (+1.00)
+  - energy 0.82 vs target 0.80 (+1.96)
+
+#2  Rooftop Lights                           Score:  3.42
+------------------------------------------------------------
+  - mood matches 'happy' (+1.50)
+  - energy 0.76 vs target 0.80 (+1.92)
+
+#3  Gym Hero                                 Score:  2.74
+------------------------------------------------------------
+  - genre matches 'pop' (+1.00)
+  - energy 0.93 vs target 0.80 (+1.74)
+
+#4  Concrete Crown                           Score:  1.96
+------------------------------------------------------------
+  - energy 0.78 vs target 0.80 (+1.96)
+
+#5  Calle Fuego                              Score:  1.90
+------------------------------------------------------------
+  - energy 0.85 vs target 0.80 (+1.90)
+
+============================================================
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
